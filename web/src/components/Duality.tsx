@@ -6,6 +6,7 @@ import { useEffect, useRef } from 'react'
 import { ui } from '../content'
 import { useT } from '../lib/prefs'
 import { reducedMotion } from '../lib/scroll'
+import { asset } from '../lib/asset'
 
 export default function Duality() {
   const t = useT()
@@ -49,8 +50,8 @@ export default function Duality() {
   return (
     <section id="start" ref={root} className="duality">
       <div className="duality__stage" aria-hidden="true">
-        <img className="duality__robot" src="/img/duality/robot.png" alt="" width={1024} height={1024} />
-        <img className="duality__human" src="/img/duality/andre.png" alt="" width={1024} height={1024} />
+        <img className="duality__robot" src={asset('img/duality/robot.png')} alt="" width={1024} height={1024} />
+        <img className="duality__human" src={asset('img/duality/andre.png')} alt="" width={1024} height={1024} />
         <span className="duality__seam" />
       </div>
       <h2 className="sr-only">André Acioli — AI Engineer & Software Developer</h2>

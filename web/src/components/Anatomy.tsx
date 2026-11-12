@@ -8,18 +8,19 @@ import { useEffect, useRef, useState } from 'react'
 import KeyedFilm, { type FilmSource, type FilmView } from './KeyedFilm'
 import { about, projects, ui } from '../content'
 import { useT } from '../lib/prefs'
+import { asset } from '../lib/asset'
 import { Branches, Relay, Terrain } from '@lucasmarkes/hairline/react'
 import { ScrollTrigger, getLenis, reducedMotion, scrollToY, settleEase } from '../lib/scroll'
 
 // Timeline: face→body, opening, orbit, orbit reversed, bridge (reassembly into the Vitruvian
 // pose), orbit to 3/4.
-const CLIPS = [1, 2, 3, 4, 5, 6].map((n) => `/video/anatomy-${n}.mp4`)
+const CLIPS = [1, 2, 3, 4, 5, 6].map((n) => asset(`video/anatomy-${n}.mp4`))
 // Clip joints that do not match frame for frame: only A → opening.
 const SEAMS = [1]
 // One interactive hairline figure per about block; it plays its answer while its shot rests.
 const FIGURES = { relay: Relay, terrain: Terrain, branches: Branches }
 // One still per rest, used until the clips are deployed.
-const STILLS = ['corpo-inteiro', 'explodido', 'lateral', 'vitruviano', 'vitruviano-34'].map((n) => `/img/anatomy/${n}.png`)
+const STILLS = ['corpo-inteiro', 'explodido', 'lateral', 'vitruviano', 'vitruviano-34'].map((n) => asset(`img/anatomy/${n}.png`))
 
 // Shots, one per rest. `f` is the film position at the rest (clip index + fraction);
 // `view` frames the film there; `dir`/`rot` say where the copy drifts as the camera moves on.
@@ -354,7 +355,7 @@ export default function Anatomy() {
           <div ref={panel} className={`projects__panel ${open ? 'is-open' : ''}`} aria-live="polite">
             {projects.map((pr, i) => (
               <figure key={pr.slug} className={`projects__card ${hover === i ? 'is-on' : ''}`} aria-hidden={hover !== i}>
-                <img src={`/img/covers/${pr.slug}.webp`} alt="" loading="lazy" />
+                <img src={asset(`img/covers/${pr.slug}.webp`)} alt="" loading="lazy" />
                 <figcaption>
                   <p className="projects__summary">{t(pr.summary)}</p>
                   <p className="mono projects__stack">{pr.stack.join(' · ')}</p>

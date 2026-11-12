@@ -4,6 +4,8 @@ Portfólio interativo de **André Acioli**, AI Engineer e `< Software Developer 
 
 Preto e branco com subtons, nos temas claro e escuro, em PT e EN.
 
+**No ar:** https://andre-atlas.github.io/portfolio/
+
 ## Cenas
 
 | # | Cena | O que acontece |
@@ -37,6 +39,8 @@ npm run build      # gera web/dist
 npm run preview    # serve o build
 ```
 
+**Publicação:** cada push na `main` roda `.github/workflows/pages.yml`, que gera o build com a base `/portfolio/` e publica no GitHub Pages. Os arquivos públicos são referenciados por `asset()` (`web/src/lib/asset.ts`), então o site funciona tanto na raiz (localmente) quanto no subcaminho do Pages.
+
 ## Estrutura
 
 ```
@@ -52,6 +56,7 @@ web/
     content.ts                todos os textos em PT/EN, projetos e contato
     lib/prefs.ts              tema e idioma (seguem o sistema; salvos no localStorage)
     lib/scroll.ts             Lenis + ScrollTrigger num só relógio
+    lib/asset.ts              caminhos públicos relativos à base do Vite
     components/
       Neuron.tsx              neurônio three.js da entrada
       Duality.tsx             cena 2, emenda guiada pelo cursor
@@ -60,6 +65,8 @@ web/
       Menu.tsx                menu, PT/EN, tema
       Contact.tsx             contato
     styles.css                tokens dos temas e estilos de todas as cenas
+
+.github/workflows/pages.yml  build e publicação no GitHub Pages
 tools/
   prep-clips.sh               recodifica os clipes do Flow para o scrub
 docs/
