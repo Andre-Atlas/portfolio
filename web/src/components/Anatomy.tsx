@@ -65,6 +65,7 @@ const SNAP_DELAY = 420
 const SNAP_REACH = 0.6
 
 const clamp = (x: number, a = 0, b = 1) => Math.min(b, Math.max(a, x))
+const stepEase = (t: number) => (1 - Math.cos(Math.PI * t)) / 2
 const sstep = (a: number, b: number, x: number) => {
   const t = clamp((x - a) / (b - a))
   return t * t * (3 - 2 * t)
@@ -246,7 +247,9 @@ export default function Anatomy() {
       target = y
       pending = y
       const dist = Math.abs(y - window.scrollY) / window.innerHeight
-      const dur = reducedMotion ? 0 : gentle ? clamp(0.9 + dist * 0.9, 0.9, 1.6) : clamp(0.7 + dist * 0.28, 0.7, 2.4)
+      // An arrow-key step is slow enough to watch the film run frame by frame between two rests
+      // (~2.6 s for a clip's stretch), on a sine ease that never rushes through the middle.
+      const dur = reducedMotion ? 0 : gentle ? clamp(0.9 + dist * 0.9, 0.9, 1.6) : clamp(1.2 + dist * 1.1, 1.8, 4.2)
       window.clearTimeout(guard)
       // If the user takes over mid-move the tween never completes; release after its length.
       guard = window.setTimeout(() => {
@@ -262,7 +265,7 @@ export default function Anatomy() {
           queued -= q
           if (!step(q)) queued = 0
         }
-      }, gentle ? settleEase : undefined)
+      }, gentle ? settleEase : stepEase)
     }
     const step = (dir: number) => {
       const ys = stops()
