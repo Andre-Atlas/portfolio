@@ -2,6 +2,8 @@
 // direction, so shadowed green goes too), erodes the matte edge by a pixel and turns the metal
 // grey, so one clip sits on both themes. `position` runs from 0 to the number of clips: clip i
 // plays as it goes from i to i + 1, so each integer is a keyframe where two clips meet.
+// Every clip starts and ends on a still frame, and clips that do not continue each other are
+// separated by a break, where `fade` takes the film off screen while the position crosses over.
 // Without clips it falls back to keyed stills (one per integer) with a blur dissolve: the
 // outgoing frame blurs away before the next one resolves, never a sharp double exposure.
 // Textures stay in sRGB on purpose: the shader writes straight to the sRGB canvas.
@@ -27,6 +29,7 @@ uniform vec2 uSrc;
 uniform float uZoom;
 uniform vec2 uShift;
 uniform float uInk;      // 0 dark theme (metal as is), 1 light theme (slightly deepened)
+uniform float uFade;     // 1 on screen, 0 gone (breaks)
 
 const vec2 KEY = vec2(-0.104, -0.311); // CbCr of the Flow chroma green #00B140
 vec2 contain(vec2 uv) {
@@ -75,7 +78,7 @@ void main() {
   vec4 c = vec4(0.0);
   if (uAlphaA > 0.001) c += sharpOrBlur(uA, uv, uBlurA) * uAlphaA;
   if (uAlphaB > 0.001) c = c * (1.0 - uAlphaB) + sharpOrBlur(uB, uv, uBlurB) * uAlphaB;
-  gl_FragColor = c;
+  gl_FragColor = c * uFade;
 }
 `
 
@@ -87,11 +90,7 @@ const sstep = (a: number, b: number, x: number) => {
   return t * t * (3 - 2 * t)
 }
 
-// Seams between clips that do not match frame for frame get a short blur dissolve, centred on
-// the seam position, `SEAM_W` wide on each side.
-const SEAM_W = 0.07
-
-export default function KeyedFilm({ source, position, view, seams = [] }: { source: FilmSource; position: { current: number }; view: { current: FilmView }; seams?: number[] }) {
+export default function KeyedFilm({ source, position, view, fade }: { source: FilmSource; position: { current: number }; view: { current: FilmView }; fade: { current: number } }) {
   const host = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -115,6 +114,7 @@ export default function KeyedFilm({ source, position, view, seams = [] }: { sour
       uZoom: { value: 1 },
       uShift: { value: new THREE.Vector2() },
       uInk: { value: 0 },
+      uFade: { value: 1 },
     }
     const mat = new THREE.ShaderMaterial({ vertexShader: vert, fragmentShader: frag, uniforms: u, transparent: true, depthTest: false, premultipliedAlpha: true })
     const scene = new THREE.Scene()
@@ -172,27 +172,20 @@ export default function KeyedFilm({ source, position, view, seams = [] }: { sour
     const holds = (c: Clip, want: number, onScreen: boolean) =>
       c.v.readyState >= 2 && !c.v.seeking && c.shown >= 0 && Math.abs(c.shown - want) <= (onScreen ? 0.25 : FRAME * 1.5)
     let shownA: Clip | null = null
-    let shownB: Clip | null = null
-    const show = (slot: 'A' | 'B', c: Clip, want: number) => {
-      const cur = slot === 'A' ? shownA : shownB
+    const show = (c: Clip, want: number) => {
       seek(c, want)
-      if (holds(c, want, cur === c)) {
-        if (slot === 'A') {
-          shownA = c
-          u.uA.value = c.tex
-        } else {
-          shownB = c
-          u.uB.value = c.tex
-        }
+      if (holds(c, want, shownA === c)) {
+        shownA = c
+        u.uA.value = c.tex
         if (c.v.videoWidth) u.uSrc.value.set(c.v.videoWidth, c.v.videoHeight)
       }
     }
-    // Park the neighbours at the frames they will be entered on, never touching a clip on screen.
+    // Park the neighbours at the frames they will be entered on, never touching the clip on screen.
     const park = (i: number) => {
       const prev = videos[i - 1]
       const next = videos[i + 1]
-      if (prev && prev !== shownA && prev !== shownB) seek(prev, timeOf(prev, 1))
-      if (next && next !== shownA && next !== shownB) seek(next, timeOf(next, 0))
+      if (prev && prev !== shownA) seek(prev, timeOf(prev, 1))
+      if (next && next !== shownA) seek(next, timeOf(next, 0))
     }
     // Still mode: one texture per keyframe.
     const loader = new THREE.TextureLoader()
@@ -223,32 +216,17 @@ export default function KeyedFilm({ source, position, view, seams = [] }: { sour
       u.uShift.value.x += (vw.x - u.uShift.value.x) * 0.09
       u.uShift.value.y += (vw.y - u.uShift.value.y) * 0.09
       blur += (vw.blur - blur) * 0.09
+      u.uFade.value += (fade.current - u.uFade.value) * 0.14
+      const fadeBlur = (1 - u.uFade.value) * 6
       if (videos.length) {
-        const seam = seams.find((b) => Math.abs(p - b) < SEAM_W && b > 0 && b < videos.length)
-        if (seam !== undefined) {
-          // Hold the last frame of the outgoing clip and the first of the next, and dissolve.
-          const m = (p - (seam - SEAM_W)) / (2 * SEAM_W)
-          const a = videos[seam - 1]
-          const b = videos[seam]
-          show('A', a, timeOf(a, 1))
-          show('B', b, timeOf(b, 0))
-          // The outgoing frame stays fully opaque while the next one fades in over it, then
-          // drops away once covered, so the figure never thins out mid-dissolve.
-          u.uAlphaA.value = 1 - sstep(0.75, 1, m)
-          u.uAlphaB.value = sstep(0.1, 0.75, m)
-          u.uBlurA.value = blur + sstep(0.2, 0.8, m) * 3
-          u.uBlurB.value = blur + (1 - sstep(0.2, 0.8, m)) * 3
-          park(seam)
-        } else {
-          const i = Math.min(videos.length - 1, Math.max(0, Math.floor(p)))
-          const c = videos[i]
-          show('A', c, timeOf(c, p - i))
-          shownB = null
-          u.uAlphaA.value = 1
-          u.uAlphaB.value = 0
-          u.uBlurA.value = blur
-          park(i)
-        }
+        // An integer position belongs to the clip that starts there, except the very end.
+        const i = Math.min(videos.length - 1, Math.max(0, Math.floor(p)))
+        const c = videos[i]
+        show(c, timeOf(c, p - i))
+        u.uAlphaA.value = 1
+        u.uAlphaB.value = 0
+        u.uBlurA.value = blur + fadeBlur
+        park(i)
       } else if (stills.length) {
         const f = Math.min(stills.length - 1, Math.max(0, p))
         const i = Math.min(stills.length - 2, Math.floor(f))
@@ -258,8 +236,8 @@ export default function KeyedFilm({ source, position, view, seams = [] }: { sour
         // Blur dissolve: out fades over 0..0.55 while blurring; in resolves over 0.45..1.
         u.uAlphaA.value = 1 - sstep(0.05, 0.55, m)
         u.uAlphaB.value = sstep(0.45, 0.95, m)
-        u.uBlurA.value = blur + sstep(0, 0.55, m) * 18
-        u.uBlurB.value = blur + (1 - sstep(0.45, 1, m)) * 18
+        u.uBlurA.value = blur + fadeBlur + sstep(0, 0.55, m) * 18
+        u.uBlurB.value = blur + fadeBlur + (1 - sstep(0.45, 1, m)) * 18
       }
       // Dev only: log the timeline position of the frame actually on screen (clip index + fraction).
       if (import.meta.env.DEV && videos.length && shownA) {
@@ -277,7 +255,7 @@ export default function KeyedFilm({ source, position, view, seams = [] }: { sour
       renderer.dispose()
       renderer.domElement.remove()
     }
-  }, [source, position, view])
+  }, [source, position, view, fade])
 
   return <div ref={host} className="film" aria-hidden="true" />
 }

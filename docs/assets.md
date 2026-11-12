@@ -6,29 +6,25 @@ Todos os visuais foram gerados no **Google Flow**: imagens com Nano Banana e ví
 
 - **Fundo:** verde chroma chapado (#00B140), sem chão, sombra, texto ou letterbox. O shader recorta o verde e converte tudo para cinza.
 - **Robô:** um design original, masculino, com a construção à mostra (engrenagens, rolamentos, cabos, placas de circuito, articulações). Por baixo da placa do rosto, a cabeça é um núcleo mecânico com lentes de câmera, sem crânio humano. Personagens conhecidos serviram só de referência de clima.
-- **Continuidade:** cada vídeo é gerado com o primeiro e o último quadro definidos. O primeiro quadro de um clipe é o último quadro salvo do clipe anterior ("Salvar frame" no editor do Flow), e é isso que faz as emendas casarem.
-- **Revisão:** confira a linha do tempo de cada clipe no editor antes de usá-lo. O gerador às vezes troca o robô por um modelo liso e esguio; esses trechos precisam ser cortados.
+- **Pontas paradas:** cada vídeo é gerado com o primeiro e o último quadro definidos pelos quadros-chave de `assets-src/keyframes/video/`, e o prompt pede cerca de 0,5 s de quadro estável no começo e no fim. Assim o clipe começa e termina limpo.
+- **Continuidade:** dentro de um trecho de filme, o quadro-chave final de um clipe é o inicial do seguinte. Entre trechos há um break, então não é preciso inventar uma ponte entre estados que não se ligam (como da explosão para a Vitruviana).
+- **Anexar, não citar:** no agente do Flow, anexe os quadros-chave pelo seletor de mídia ("Incluir no comando"), de preferência numa sessão nova, e descreva o robô com uma ficha (ombros largos com engrenagens, peito plano e quadrado, abdômen exposto com placas de circuito). Quando os quadros são só citados pelo nome, o Omni trata a imagem como referência e redesenha o robô num modelo esguio, de peito liso, já no primeiro quadro.
+- **Revisão:** confira a linha do tempo de cada clipe antes de usá-lo. O gerador às vezes troca o robô por um modelo liso e esguio. Um clipe assim é **gerado de novo**, nunca cortado.
 
 ## Preparar os vídeos
 
 Baixe os clipes do Flow em 1080p e rode, da raiz do repositório:
 
 ```bash
-tools/prep-clips.sh \
-  "Robot_parts_separating_on_green_…_1080p.mp4:0-5.08" \
-  "Robot_components_opening_up_…_1080p.mp4:3.3-9.96" \
-  "Camera_orbiting_around_frozen_robot_…_1080p.mp4" \
-  "Camera_orbiting_around_frozen_robot_…_1080p.mp4:rev" \
-  "Robot_assembling_into_Vitruvian_…_1080p.mp4:0-6.5" \
-  "Robot_holding_Vitruvian_pose_…_1080p.mp4:0-3.0"
+tools/prep-clips.sh rosto-corpo.mp4 abertura.mp4 orbita.mp4 pose.mp4 orbita-vitruviana.mp4
 ```
 
-Cada argumento é um arquivo, opcionalmente seguido de `:início-fim` (corte em segundos) e/ou `:rev` (tocar ao contrário). A ordem dos argumentos é a ordem na linha do tempo. A saída vai para `web/public/video/anatomy-1..N.mp4`, em 1920 px de largura, 24 fps, H.264 com CRF 20 e um quadro-chave a cada 4 quadros (para o seek do scrub ser rápido), sem áudio e com faststart. Dá para mudar com `WIDTH`, `CRF` e `GOP`.
+Cada argumento é um arquivo, usado inteiro. A ordem dos argumentos é a ordem na linha do tempo. A opção `:início-fim` (corte em segundos) existe como ferramenta, mas não serve para remendar um clipe ruim. A saída vai para `web/public/video/anatomy-1..N.mp4`, em 1920 px de largura, 24 fps, H.264 com CRF 20 e um quadro-chave a cada 4 quadros (para o seek do scrub ser rápido), sem áudio e com faststart. Dá para mudar com `WIDTH`, `CRF` e `GOP`.
 
 Se você mudar a quantidade de clipes ou os cortes, ajuste em `web/src/components/Anatomy.tsx`:
 - `CLIPS`, a lista de arquivos;
-- `SHOTS[].f`, a posição de cada parada;
-- `SEAMS`, as emendas que precisam de dissolução.
+- `SHOTS[].f`, a posição de cada parada, e `brk` nas paradas de break;
+- `BUDGET`, o comprimento de scroll de cada parada.
 
 ## Imagens
 
@@ -47,4 +43,4 @@ web/node_modules/ffmpeg-static/ffmpeg -i quadro.png \
 
 ## Figuras
 
-As figuras dos blocos do Sobre vêm do pacote [`@lucasmarkes/hairline`](https://hairline.lucasmarkes.com) (MIT): `Relay`, `Terrain` e `Branches`. As cores seguem os tokens do tema, por meio das variáveis `--hairline-*` em `.about` no `styles.css`.
+As figuras foram criadas caso a caso com a skill `hairline-create` do [Hairline](https://hairline.lucasmarkes.com) (MIT), uma para cada lugar onde entram. Elas ficam em `web/src/figures/`. Veja a tabela e o modo de ajustar em [arquitetura.md](arquitetura.md#figuras-websrcfigures).

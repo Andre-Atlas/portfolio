@@ -69,7 +69,7 @@ export const about = {
   blocks: [
     {
       tag: 'LLM',
-      figure: 'relay',
+      figure: 'binders',
       title: { pt: 'IA generativa', en: 'Generative AI' },
       body: {
         pt: 'Pipelines de RAG, sistemas multiagente, busca semântica e embeddings. Modelos de linguagem que respondem com fonte e respeitam limites.',
@@ -78,7 +78,7 @@ export const about = {
     },
     {
       tag: 'ML',
-      figure: 'terrain',
+      figure: 'weights',
       title: { pt: 'Machine Learning', en: 'Machine Learning' },
       body: {
         pt: 'Modelagem preditiva, fine-tuning e quantização de modelos para rodar na borda, com experimentos medidos e hipóteses que podem falhar.',
@@ -87,7 +87,7 @@ export const about = {
     },
     {
       tag: '</>',
-      figure: 'branches',
+      figure: 'containers',
       title: { pt: 'Engenharia de software', en: 'Software engineering' },
       body: {
         pt: 'APIs de alto desempenho, pipelines de dados escaláveis, bancos relacionais, NoSQL e vetoriais, contêineres e MLOps, com mascaramento de dados pessoais e conformidade com a LGPD.',
@@ -95,8 +95,51 @@ export const about = {
       },
     },
   ],
-  stack: ['Python', 'SQL', 'Go', 'TypeScript', 'PyTorch', 'TensorFlow', 'scikit-learn', 'FastAPI', 'PostgreSQL · pgvector', 'MongoDB', 'Redis', 'Spark', 'Airflow', 'Docker'],
 }
+
+// Breaks: full-screen pauses between the two stretches of film. The robot is off screen there,
+// so each animation after a break starts on its own first frame.
+export const breaks = {
+  work: {
+    figure: 'caliper',
+    kicker: { pt: 'Método', en: 'Method' },
+    title: { pt: 'Como eu trabalho', en: 'How I work' },
+    points: [
+      {
+        title: { pt: 'Resposta com fonte', en: 'Answers with sources' },
+        body: {
+          pt: 'Um modelo que afirma algo precisa mostrar de onde tirou. Recuperação, citação e rastreio vêm antes da fluência.',
+          en: 'A model that claims something has to show where it came from. Retrieval, citation and tracing come before fluency.',
+        },
+      },
+      {
+        title: { pt: 'Limites explícitos', en: 'Explicit limits' },
+        body: {
+          pt: 'Guardrails, dados pessoais mascarados e o que o sistema não deve fazer ficam escritos e testados, não implícitos.',
+          en: 'Guardrails, masked personal data and what the system must not do are written down and tested, not implied.',
+        },
+      },
+      {
+        title: { pt: 'Medir antes de afirmar', en: 'Measure before claiming' },
+        body: {
+          pt: 'Cada mudança chega com uma métrica e uma hipótese que pode falhar. Se não deu para medir, ainda não terminou.',
+          en: 'Every change comes with a metric and a hypothesis that can fail. If it could not be measured, it is not done yet.',
+        },
+      },
+    ],
+  },
+  stack: {
+    figure: 'trays',
+    kicker: { pt: 'Ferramentas', en: 'Tools' },
+    title: { pt: 'Stack', en: 'Stack' },
+    groups: [
+      { name: { pt: 'Linguagens', en: 'Languages' }, items: ['Python', 'SQL', 'Go', 'TypeScript'] },
+      { name: { pt: 'IA e ML', en: 'AI and ML' }, items: ['PyTorch', 'TensorFlow', 'scikit-learn'] },
+      { name: { pt: 'Dados', en: 'Data' }, items: ['PostgreSQL · pgvector', 'MongoDB', 'Redis', 'Spark', 'Airflow'] },
+      { name: { pt: 'Infra e APIs', en: 'Infra and APIs' }, items: ['FastAPI', 'Docker'] },
+    ],
+  },
+} as const
 
 export const projects: Project[] = [
   {

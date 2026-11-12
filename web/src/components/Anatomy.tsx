@@ -1,45 +1,58 @@
-// Scenes 3 and 4 share one pinned stage, cut as a sequence of camera shots: the face pulls back
-// to the whole robot, which opens up as its parts drift off the endoskeleton, the camera orbits
-// the exploded machine and back (the orbit played backwards), a bridge clip brings the parts home
-// while the robot takes the Vitruvian pose, and the camera orbits to three quarters for the
-// projects. Each shot ends on a rest: the frame and the copy settle there, scrolling snaps to it
-// and the arrow keys step from one rest to the next. See docs/arquitetura.md.
+// Scenes 3 and 4 share one pinned stage, cut as a sequence of camera shots in two stretches of
+// film. First: the face pulls back to the whole robot, which opens up as its parts drift off the
+// endoskeleton, and the camera orbits the exploded machine. A break (How I work) takes the film
+// off screen. Second: the whole robot takes the Vitruvian pose; a second break (Stack); the
+// camera orbits the Vitruvian machine to three quarters for the projects. Every clip starts and
+// ends still, so no seam needs patching. Each shot ends on a rest: the frame and the copy settle
+// there, scrolling snaps to it and the arrow keys step from one rest to the next.
+// See docs/arquitetura.md.
 import { useEffect, useRef, useState } from 'react'
 import KeyedFilm, { type FilmSource, type FilmView } from './KeyedFilm'
-import { about, projects, ui } from '../content'
+import { about, breaks, projects, ui } from '../content'
 import { useT } from '../lib/prefs'
 import { asset } from '../lib/asset'
-import { Branches, Relay, Terrain } from '@lucasmarkes/hairline/react'
+import Figure, { type FigureName } from '../figures/Figure'
 import { ScrollTrigger, getLenis, reducedMotion, scrollToY, settleEase } from '../lib/scroll'
 
-// Timeline: face→body, opening, orbit, orbit reversed, bridge (reassembly into the Vitruvian
-// pose), orbit to 3/4.
-const CLIPS = [1, 2, 3, 4, 5, 6].map((n) => asset(`video/anatomy-${n}.mp4`))
-// Clip joints that do not match frame for frame: only A → opening.
-const SEAMS = [1]
-// One interactive hairline figure per about block; it plays its answer while its shot rests.
-const FIGURES = { relay: Relay, terrain: Terrain, branches: Branches }
-// One still per rest, used until the clips are deployed.
-const STILLS = ['corpo-inteiro', 'explodido', 'lateral', 'vitruviano', 'vitruviano-34'].map((n) => asset(`img/anatomy/${n}.png`))
+// Timeline: face→body, opening, orbit to the diagonal | body→Vitruvian pose | orbit to 3/4.
+const CLIPS = [1, 2, 3, 4, 5].map((n) => asset(`video/anatomy-${n}.mp4`))
+// One still per shot, used until the clips are deployed (the breaks hide theirs).
+const STILLS = ['corpo-inteiro', 'explodido', 'lateral', 'vitruviano', 'vitruviano', 'vitruviano', 'vitruviano-34'].map((n) => asset(`img/anatomy/${n}.png`))
 
-// Shots, one per rest. `f` is the film position at the rest (clip index + fraction);
-// `view` frames the film there; `dir`/`rot` say where the copy drifts as the camera moves on.
-type Shot = { f: number; view: FilmView; dir: [number, number]; rot: number }
+// Shots, one per rest. `f` is the film position at the rest (clip index + fraction; a rest at the
+// end of a clip sits just before the integer, which belongs to the next clip); `view` frames the
+// film there; `dir`/`rot` say where the copy drifts as the camera moves on. A break hides the
+// film; its view is the next shot's, so nothing pans while it is away.
+type Shot = { f: number; view: FilmView; dir: [number, number]; rot: number; brk?: boolean }
+const END = 0.995
 const SHOTS: Shot[] = [
-  { f: 0.86, view: { zoom: 1, x: 0.17, y: 0, blur: 0 }, dir: [0, -70], rot: 0 },          // intro: whole robot, front
-  { f: 2, view: { zoom: 1, x: -0.17, y: 0, blur: 0 }, dir: [-140, 0], rot: 12 },       // LLM: opened up, front
-  { f: 3, view: { zoom: 1, x: 0.17, y: 0, blur: 0 }, dir: [140, 0], rot: -12 },        // ML: exploded, diagonal
-  { f: 4.97, view: { zoom: 1, x: -0.17, y: 0, blur: 0 }, dir: [0, -90], rot: 8 },         // </>: Vitruvian, front
-  { f: 6, view: { zoom: 1.04, x: -0.2, y: 0, blur: 0 }, dir: [160, 0], rot: -14 },     // projects: three quarters
+  { f: END, view: { zoom: 1, x: 0.17, y: 0, blur: 0 }, dir: [0, -70], rot: 0 },               // intro: whole robot, front
+  { f: 1 + END, view: { zoom: 1, x: -0.17, y: 0, blur: 0 }, dir: [-140, 0], rot: 12 },        // LLM: opened up, front
+  { f: 2 + END, view: { zoom: 1, x: 0.17, y: 0, blur: 0 }, dir: [140, 0], rot: -12 },         // ML: exploded, diagonal
+  { f: 3, view: { zoom: 1, x: -0.17, y: 0, blur: 0 }, dir: [0, -60], rot: 0, brk: true },     // break: how I work
+  { f: 3 + END, view: { zoom: 1, x: -0.17, y: 0, blur: 0 }, dir: [0, -90], rot: 8 },          // </>: Vitruvian, front
+  { f: 4, view: { zoom: 1, x: -0.17, y: 0, blur: 0 }, dir: [0, -60], rot: 0, brk: true },     // break: stack
+  { f: 5, view: { zoom: 1.04, x: -0.2, y: 0, blur: 0 }, dir: [160, 0], rot: -14 },            // projects: three quarters
 ]
-// Scroll progress → shot space s (rest i at s = i). Flat stretches are the holds; ML → </>
-// is longer because it runs two clips (back round the front, then the bridge into the pose).
-const KEYS: [number, number][] = [[0, -1], [0.06, 0], [0.1, 0], [0.22, 1], [0.26, 1], [0.38, 2], [0.42, 2], [0.74, 3], [0.78, 3], [0.94, 4], [1, 4]]
-const RESTS = [0.08, 0.24, 0.4, 0.76, 0.97]
-const HEIGHT_VH = 1100
+// Scroll budget, in vh per shot: the move into it, then the hold at it. A clip gets ~130vh; the
+// move into a break only fades the film, and the move out of one holds the next clip's first
+// frame until the film is back, then plays it.
+const BUDGET: [number, number][] = [[60, 40], [130, 40], [130, 40], [90, 50], [170, 40], [90, 50], [150, 40]]
+const RUN = BUDGET.reduce((a, [m, h]) => a + m + h, 0)
+const HEIGHT_VH = RUN + 100
+// Scroll progress → shot space s (rest i at s = i); the flat stretches are the holds.
+const KEYS: [number, number][] = [[0, -1]]
+const RESTS: number[] = []
+BUDGET.reduce((y, [m, h], i) => {
+  KEYS.push([(y + m) / RUN, i])
+  RESTS.push((y + m + h / 2) / RUN)
+  KEYS.push([(y + m + h) / RUN, i])
+  return y + m + h
+}, 0)
+const PROJECTS = SHOTS.length - 1
 // Where the robot's centre sits horizontally at the end of the last clip (fraction of width).
-const ORBIT_END_X = -0.2
-const ORBIT_TURN = -24
+const ORBIT_END_X = -0.24
+const ORBIT_TURN = -12
 // With the list open the camera pulls back so the plate clears the cover panel.
 const LIST_ZOOM = 0.64
 const LIST_X = -0.27
@@ -66,12 +79,23 @@ function piecewise(keys: [number, number][], x: number) {
   }
   return keys[keys.length - 1][1]
 }
-// Film position for shot space s: before the first rest the first clip runs from its start.
-const filmAt = (s: number) => (s < 0 ? SHOTS[0].f * (s + 1) : piecewise(SHOTS.map((sh, i) => [i, sh.f]), s))
+// How far the film is on screen: gone at a break, back once the move out of it is under way.
+const filmFade = (s: number) => SHOTS.reduce((a, sh, j) => (sh.brk ? a * sstep(0.12, s < j ? 0.55 : 0.42, Math.abs(s - j)) : a), 1)
+// Film position for shot space s: before the first rest the first clip runs from its start. Out
+// of a break the next clip waits on its first frame until the film has faded back in.
+function filmAt(s: number) {
+  if (s < 0) return SHOTS[0].f * (s + 1)
+  const i = clamp(Math.floor(s), 0, SHOTS.length - 2)
+  const k = s - i
+  const a = SHOTS[i]
+  const b = SHOTS[i + 1]
+  return lerp(a.f, b.f, sstep(a.brk ? 0.42 : 0, 1, k))
+}
 
 export default function Anatomy() {
   const t = useT()
   const position = useRef({ current: 0 })
+  const fade = useRef({ current: 1 })
   const view = useRef({ current: { ...SHOTS[0].view } as FilmView })
   const root = useRef<HTMLElement>(null)
   const texts = useRef<(HTMLElement | null)[]>([])
@@ -123,6 +147,8 @@ export default function Anatomy() {
         const s = piecewise(KEYS, progress)
         const narrow = window.innerWidth < 860
         position.current.current = stillMode.current ? clamp(s, 0, SHOTS.length - 1) : filmAt(s)
+        const shown = filmFade(s)
+        fade.current.current = shown
         const i = clamp(Math.floor(s), 0, SHOTS.length - 2)
         const k = clamp(s - i)
         const a = SHOTS[i].view
@@ -154,19 +180,19 @@ export default function Anatomy() {
             : `perspective(1200px) translate(${d * dx}px, ${d * dy}px) rotateY(${d * SHOTS[j].rot}deg)`
           el.style.pointerEvents = o > 0.6 ? 'auto' : 'none'
         })
-        if (s < 3.4 && openRef.current) setOpen(false)
+        if (s < PROJECTS - 0.6 && openRef.current) setOpen(false)
         const near = Math.round(s)
         setActive(Math.abs(s - near) < 0.06 ? near : -1)
 
         // Vitruvian plate: drawn as the robot reassembles, then turns with the orbit.
         const svg = vitru.current
         if (svg) {
-          const draw = sstep(2.72, 3, s)
-          const orbit = sstep(3, 4, s)
-          const x0 = narrow ? 0 : SHOTS[3].view.x
+          const draw = sstep(3.75, 4, s)
+          const orbit = sstep(5.42, 6, s)
+          const x0 = narrow ? 0 : SHOTS[4].view.x
           const x = narrow ? 0 : lerp(lerp(x0, ORBIT_END_X, orbit), LIST_X, listing) - listShift.current
           svg.style.setProperty('--draw', String(draw))
-          svg.style.opacity = String(draw * (1 - sstep(4.2, 4.6, s)))
+          svg.style.opacity = String(draw * shown)
           // The plate is sized against the film frame: 1.111 × the frame height at zoom 1 (calibrated
           // on the last Vitruvian frame), whatever the viewport's shape.
           const W = window.innerWidth
@@ -296,13 +322,15 @@ export default function Anatomy() {
     texts.current[j] = n
   }
   const layouts = ['shot--right', 'shot--left', 'shot--right']
+  // The about blocks sit on shots 1, 2 and 4 (3 and 5 are the breaks).
+  const BLOCK_SHOTS = [1, 2, 4]
 
   return (
     <section id="anatomy" ref={root} className="anatomy" style={{ height: `${HEIGHT_VH}vh` }}>
       <span id="about" className="anchor" style={{ top: anchor(RESTS[0]) }} />
-      <span id="projects" className="anchor" style={{ top: anchor(RESTS[4]) }} />
+      <span id="projects" className="anchor" style={{ top: anchor(RESTS[PROJECTS]) }} />
       <div className={`anatomy__stage ${open ? 'is-listing' : ''}`}>
-        {film && <KeyedFilm source={film} position={position.current} view={view.current} seams={SEAMS} />}
+        {film && <KeyedFilm source={film} position={position.current} view={view.current} fade={fade.current} />}
         <svg ref={vitru} className="vitru" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
           <circle ref={circle} cx="50" cy="54" r="43" pathLength={1} />
           <rect x="11" y="15" width="78" height="81" pathLength={1} />
@@ -316,22 +344,53 @@ export default function Anatomy() {
             <p className="about__text">{t(about.intro)}</p>
           </div>
           {about.blocks.map((b, i) => (
-            <div key={b.tag} ref={setText(i + 1)} className={`shot ${layouts[i]} about__block`}>
+            <div key={b.tag} ref={setText(BLOCK_SHOTS[i])} className={`shot ${layouts[i]} about__block`}>
               <div>
-                {(() => {
-                  const Figure = FIGURES[b.figure as keyof typeof FIGURES]
-                  return <Figure className="about__figure" intensity={0.7} play={active === i + 1} label={t(b.title)} />
-                })()}
+                <Figure name={b.figure as FigureName} className="about__figure" intensity={0.6} play={active === BLOCK_SHOTS[i]} label={t(b.title)} />
                 <p className="mono about__tag">{b.tag}</p>
                 <h3 className="serif">{t(b.title)}</h3>
                 <p>{t(b.body)}</p>
-                {b.figure === 'branches' && <p className="mono about__stack">{about.stack.join('  ·  ')}</p>}
               </div>
             </div>
           ))}
+
+          <section ref={setText(3)} className="shot brk" aria-labelledby="brk-work">
+            <Figure name={breaks.work.figure} className="brk__figure" intensity={0.6} play={active === 3} label={t(breaks.work.title)} />
+            <div className="brk__copy">
+              <p className="mono about__kicker">{t(breaks.work.kicker)}</p>
+              <h3 id="brk-work" className="serif brk__title">{t(breaks.work.title)}</h3>
+              <ol className="brk__points">
+                {breaks.work.points.map((pt, i) => (
+                  <li key={i}>
+                    <span className="mono">{String(i + 1).padStart(2, '0')}</span>
+                    <div>
+                      <h4 className="serif">{t(pt.title)}</h4>
+                      <p>{t(pt.body)}</p>
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            </div>
+          </section>
+
+          <section ref={setText(5)} className="shot brk" aria-labelledby="brk-stack">
+            <Figure name={breaks.stack.figure} className="brk__figure" intensity={0.6} play={active === 5} label={t(breaks.stack.title)} />
+            <div className="brk__copy">
+              <p className="mono about__kicker">{t(breaks.stack.kicker)}</p>
+              <h3 id="brk-stack" className="serif brk__title">{t(breaks.stack.title)}</h3>
+              <dl className="brk__groups">
+                {breaks.stack.groups.map((gr, i) => (
+                  <div key={i}>
+                    <dt className="mono">{t(gr.name)}</dt>
+                    <dd>{gr.items.join('  ·  ')}</dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
+          </section>
         </div>
 
-        <div ref={setText(4)} className="projects">
+        <div ref={setText(PROJECTS)} className="projects">
           <button type="button" className="projects__head" aria-expanded={open} aria-controls="project-list" onClick={() => setOpen((o) => !o)}>
             <span className="serif">{t(ui.projects)}</span>
             <span className="mono">{String(projects.length).padStart(2, '0')}</span>
