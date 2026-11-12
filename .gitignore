@@ -1,0 +1,13 @@
+node_modules/
+dist/
+.DS_Store
+*.blend1
+.env*
+
+# Image and video sources (portraits, keyframes, discarded takes): kept locally only.
+assets-src/
+
+# Local agent tooling
+.agents/
+.claude/
+skills-lock.json
