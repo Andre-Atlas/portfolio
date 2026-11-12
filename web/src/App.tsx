@@ -18,14 +18,19 @@ function Entry({ onEnter, entered }: { onEnter: () => void; entered: boolean }) 
     const t0 = performance.now()
     let loaded = 0
     let id = 0
-    preload(PRELOAD, (p) => (loaded = p))
+    preload(PRELOAD, (p) => (loaded = Math.max(loaded, p)))
+    // A stalled download must not lock the visitor out: after 25 s the door opens anyway.
+    const fallback = window.setTimeout(() => (loaded = 1), 25000)
     const tick = () => {
       const p = Math.min((performance.now() - t0) / 2600, loaded, 1)
       setPct((q) => Math.max(q, p))
       if (p < 1) id = requestAnimationFrame(tick)
     }
     id = requestAnimationFrame(tick)
-    return () => cancelAnimationFrame(id)
+    return () => {
+      cancelAnimationFrame(id)
+      window.clearTimeout(fallback)
+    }
   }, [])
   const ready = pct >= 1
   return (

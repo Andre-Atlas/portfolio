@@ -106,24 +106,24 @@ export const breaks = {
     title: { pt: 'Como eu trabalho', en: 'How I work' },
     points: [
       {
-        title: { pt: 'Resposta com fonte', en: 'Answers with sources' },
+        title: { pt: 'Soluções fundamentadas', en: 'Grounded solutions' },
         body: {
-          pt: 'Um modelo que afirma algo precisa mostrar de onde tirou. Recuperação, citação e rastreio vêm antes da fluência.',
-          en: 'A model that claims something has to show where it came from. Retrieval, citation and tracing come before fluency.',
+          pt: 'Cada resposta parte de uma fonte que dá para conferir. O modelo responde com base nos documentos que a busca recupera, e não na própria memória, e os agentes se apoiam em evidências antes de sugerir qualquer passo.',
+          en: "Every answer starts from a source you can check. The model answers from the documents retrieval brings back, not from its own memory, and agents rely on evidence before suggesting any step.",
         },
       },
       {
-        title: { pt: 'Limites explícitos', en: 'Explicit limits' },
+        title: { pt: 'Segurança e controle de dados', en: 'Security and data control' },
         body: {
-          pt: 'Guardrails, dados pessoais mascarados e o que o sistema não deve fazer ficam escritos e testados, não implícitos.',
-          en: 'Guardrails, masked personal data and what the system must not do are written down and tested, not implied.',
+          pt: 'Defino o que o sistema não pode fazer antes do que ele faz. Guardrails recusam o que está fora do escopo, dados pessoais são mascarados conforme a LGPD e as decisões críticas passam por aprovação humana antes de seguir.',
+          en: 'I define what a system must not do before what it does. Guardrails refuse what is out of scope, personal data is masked under Brazil\'s LGPD, and critical decisions go through human approval before moving on.',
         },
       },
       {
-        title: { pt: 'Medir antes de afirmar', en: 'Measure before claiming' },
+        title: { pt: 'Métricas apuradas', en: 'Measured results' },
         body: {
-          pt: 'Cada mudança chega com uma métrica e uma hipótese que pode falhar. Se não deu para medir, ainda não terminou.',
-          en: 'Every change comes with a metric and a hypothesis that can fail. If it could not be measured, it is not done yet.',
+          pt: 'Mudança sem medida é só opinião. Cada versão é avaliada no mesmo conjunto de testes que a anterior, as hipóteses são registradas antes dos experimentos e um resultado ruim é corrigido, nunca escondido.',
+          en: 'A change without a measurement is just an opinion. Every version is evaluated on the same test set as the last one, hypotheses are registered before the experiments, and a bad result gets fixed, never hidden.',
         },
       },
     ],

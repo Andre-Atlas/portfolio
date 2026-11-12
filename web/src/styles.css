@@ -215,13 +215,13 @@ html.is-locked, html.is-locked body { overflow: hidden; }
   .projects { left: var(--gutter); right: var(--gutter); width: auto; top: 12vh; padding: 20px; background: var(--glass); backdrop-filter: blur(14px); border-radius: 16px; }
   .projects__panel { display: none; }
   .about__figure { display: none; }
-  .shot.brk { top: 50%; bottom: auto; left: 50%; right: auto; width: calc(100vw - 2 * var(--gutter)); grid-template-columns: 1fr; gap: 8px; padding: 18px; }
-  .brk__figure { width: 58%; margin: 0 auto; }
-  .brk__title { font-size: 36px; margin: 6px 0 14px; }
-  .brk__points { gap: 12px; }
-  .brk__points li { padding-top: 10px; }
-  .brk__points h4 { font-size: 20px; }
-  .brk__points p, .brk__groups dd { font-size: 13px; line-height: 1.45; }
+  .shot.brk { top: calc(50% + 30px); bottom: auto; left: 50%; right: auto; width: calc(100vw - 2 * var(--gutter)); grid-template-columns: 1fr; gap: 8px; padding: 18px; }
+  .brk__figure { width: 40%; max-height: 18vh; margin: 0 auto; }
+  .brk__title { font-size: 32px; margin: 4px 0 10px; }
+  .brk__points { gap: 8px; }
+  .brk__points li { grid-template-columns: 26px 1fr; padding-top: 8px; }
+  .brk__points h4 { font-size: 19px; margin-bottom: 3px; }
+  .brk__points p, .brk__groups dd { font-size: 12.5px; line-height: 1.42; }
   .brk__groups { gap: 10px; }
   .brk__groups > div { grid-template-columns: 1fr; gap: 2px; padding-top: 8px; }
   .about__title { font-size: 40px; margin: 8px 0 10px; }
