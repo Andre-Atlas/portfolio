@@ -10,10 +10,10 @@ Preto e branco com subtons, nos temas claro e escuro, em PT e EN.
 
 | # | Cena | O que acontece |
 |---|---|---|
-| 1 | **Entrada** | Um neurônio 3D ao estilo de um HUD (anéis girando como um giroscópio, elétrons no núcleo, traços de circuito) se monta enquanto carrega. O nome aparece letra a letra, seguido do botão **Entrar**. |
+| 1 | **Entrada** | Um neurônio 3D ao estilo de um HUD (anéis girando como um giroscópio, elétrons no núcleo, traços de circuito) se monta enquanto carrega. O nome aparece letra a letra. A barra de carregamento acompanha o download real dos vídeos, retratos e capas, e só então o botão **Entrar** é liberado. Scroll e setas ficam bloqueados: só o botão passa da entrada. |
 | 2 | **Dualidade** | O robô (à esquerda) e o André (à direita) ficam alinhados, separados por uma emenda que segue o cursor. O lado do robô acende "AI Engineer"; o do André, `< Software Developer />`. |
 | 3 | **Sobre** | Um filme guiado pelo scroll, quadro a quadro: o rosto recua até o corpo inteiro, o robô se abre e as peças se afastam do endoesqueleto, e a câmera orbita até a diagonal (quem sou, IA generativa, Machine Learning). Um break, **Como eu trabalho**, tira o robô da tela; depois o robô inteiro assume a pose vitruviana (engenharia de software) e vem o break **Stack**. Cada parada tem uma figura interativa feita para ela. |
-| 4 | **Projetos** | A câmera orbita a Máquina Vitruviana até 3/4 e a gravura (círculo e quadrado) gira junto. Ao clicar em **Projetos**, a lista abre; no hover, a capa e o resumo de cada projeto aparecem num painel à esquerda. |
+| 4 | **Projetos** | A câmera orbita a Máquina Vitruviana até 3/4 e a gravura (círculo e quadrado) gira junto. A lista de projetos abre sozinha quando o plano chega, pelo scroll, pelas setas ou pelo item Projetos do menu, e o título **Projetos** continua abrindo e fechando a lista; no hover, a capa e o resumo de cada projeto aparecem num painel à esquerda. |
 | 5 | **Contato** | E-mail, GitHub e LinkedIn. |
 
 Da cena 2 em diante fica disponível o menu de 9 pontos (Home, Início, Sobre mim, Projetos, Contato), além do seletor PT/EN e do tema claro/escuro com ícones de sol e lua animados.

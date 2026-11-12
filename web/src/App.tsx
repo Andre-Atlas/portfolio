@@ -7,16 +7,21 @@ import Contact from './components/Contact'
 import { person, ui } from './content'
 import { useT } from './lib/prefs'
 import { ScrollTrigger, scrollToId, startScroll } from './lib/scroll'
+import { PRELOAD, preload } from './lib/preload'
 
 function Entry({ onEnter, entered }: { onEnter: () => void; entered: boolean }) {
   const t = useT()
+  // The bar is the slower of the neuron's build (at least 2.6 s) and the real download of the
+  // film, portraits and covers, so the door only opens once the next scenes can play.
   const [pct, setPct] = useState(0)
   useEffect(() => {
     const t0 = performance.now()
+    let loaded = 0
     let id = 0
+    preload(PRELOAD, (p) => (loaded = p))
     const tick = () => {
-      const p = Math.min(1, (performance.now() - t0) / 2600)
-      setPct(p)
+      const p = Math.min((performance.now() - t0) / 2600, loaded, 1)
+      setPct((q) => Math.max(q, p))
       if (p < 1) id = requestAnimationFrame(tick)
     }
     id = requestAnimationFrame(tick)
@@ -48,7 +53,22 @@ export default function App() {
   const [entered, setEntered] = useState(false)
   useEffect(() => {
     document.documentElement.classList.toggle('is-locked', !entered)
-    if (!entered) return
+    if (!entered) {
+      // The entry is a gate: no wheel, touch or keyboard scrolling past it, only the button.
+      const stop = (e: Event) => e.preventDefault()
+      const keys = (e: KeyboardEvent) => {
+        if (['ArrowDown', 'ArrowUp', 'PageDown', 'PageUp', 'Home', 'End', ' '].includes(e.key) && !(e.target as HTMLElement)?.closest?.('button')) e.preventDefault()
+      }
+      window.scrollTo(0, 0)
+      window.addEventListener('wheel', stop, { passive: false })
+      window.addEventListener('touchmove', stop, { passive: false })
+      window.addEventListener('keydown', keys)
+      return () => {
+        window.removeEventListener('wheel', stop)
+        window.removeEventListener('touchmove', stop)
+        window.removeEventListener('keydown', keys)
+      }
+    }
     startScroll()
     ScrollTrigger.refresh()
     requestAnimationFrame(() => scrollToId('start'))

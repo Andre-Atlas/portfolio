@@ -104,6 +104,7 @@ export default function Anatomy() {
   const panel = useRef<HTMLDivElement>(null)
   const listShift = useRef(0)
   const openRef = useRef(false)
+  const autoOpened = useRef(false)
   const [open, setOpen] = useState(false)
   const [hover, setHover] = useState(0)
   const [active, setActive] = useState(-1) // shot whose copy is fully set
@@ -180,7 +181,15 @@ export default function Anatomy() {
             : `perspective(1200px) translate(${d * dx}px, ${d * dy}px) rotateY(${d * SHOTS[j].rot}deg)`
           el.style.pointerEvents = o > 0.6 ? 'auto' : 'none'
         })
-        if (s < PROJECTS - 0.6 && openRef.current) setOpen(false)
+        // The list opens by itself once the projects shot arrives (scrolling, the arrow keys or the
+        // menu's Projetos link) and closes again on the way back; the head button still toggles it.
+        if (s >= PROJECTS - 0.08 && !autoOpened.current) {
+          autoOpened.current = true
+          setOpen(true)
+        } else if (s < PROJECTS - 0.6) {
+          autoOpened.current = false
+          if (openRef.current) setOpen(false)
+        }
         const near = Math.round(s)
         setActive(Math.abs(s - near) < 0.06 ? near : -1)
 
