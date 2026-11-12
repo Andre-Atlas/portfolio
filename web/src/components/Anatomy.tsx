@@ -154,7 +154,11 @@ export default function Anatomy() {
         const k = clamp(s - i)
         const a = SHOTS[i].view
         const b = SHOTS[i + 1].view
-        const listing = openRef.current ? 1 : 0
+        // The list opens by itself at the projects shot, so the camera pulls back to the list's
+        // framing while the film is away in the Stack break, so it comes back already framed for the
+        // list and only orbits (one move, not two). Closed by hand at
+        // the shot, the full framing comes back.
+        const listing = openRef.current ? 1 : autoOpened.current ? 0 : sstep(PROJECTS - 0.85, PROJECTS - 0.4, s)
         const baseX = lerp(a.x, b.x, k)
         // Phones: closer camera, robot in the upper half, copy card below it.
         const v: FilmView = {
